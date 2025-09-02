@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Card, { CardContent, CardHeader } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -37,7 +38,7 @@ export default function Subscribe() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
             <p>Check your inbox—first alerts coming soon.</p>
-            <a className="underline" href="/">Back to deals</a>
+            <Link className="underline" href="/">Back to deals</Link>
           </CardContent>
         </Card>
       </div>
@@ -64,7 +65,7 @@ export default function Subscribe() {
               />
               <div className="flex items-center gap-3">
                 <Button type="submit" loading={loading}>Subscribe</Button>
-                <a href="/" className="text-sm text-gray-600 dark:text-gray-400 underline">Back to deals</a>
+                <Link href="/" className="text-sm text-gray-600 dark:text-gray-400 underline">Back to deals</Link>
               </div>
               {error && <p className="text-red-600 text-sm">{error}</p>}
             </form>

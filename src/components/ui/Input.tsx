@@ -9,7 +9,8 @@ type Props = React.InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export function Input({ className = "", label, hint, error, id, ...rest }: Props) {
-  const inputId = id || React.useId();
+  const autoId = React.useId();
+  const inputId = id ?? autoId;
   const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
   return (
     <div className="space-y-1.5">
@@ -39,4 +40,3 @@ export function Input({ className = "", label, hint, error, id, ...rest }: Props
 }
 
 export default Input;
-

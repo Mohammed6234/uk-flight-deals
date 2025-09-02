@@ -2,6 +2,7 @@ import { supabasePublic } from '@/lib/supabase';
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 export default async function Home() {
   const { data: deals } = await supabasePublic
@@ -23,7 +24,7 @@ export default async function Home() {
               Curated and delivered straight to your inbox.
             </p>
             <div className="flex items-center gap-3">
-              <a href="/subscribe"><Button size="lg">Get email alerts</Button></a>
+              <Link href="/subscribe"><Button size="lg">Get email alerts</Button></Link>
               <a href="#deals"><Button variant="secondary" size="lg">Browse latest</Button></a>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -73,9 +74,9 @@ export default async function Home() {
                     <a href={d.link} target="_blank" rel="noreferrer">
                       <Button size="sm" variant="secondary">View deal</Button>
                     </a>
-                    <a href="/subscribe">
+                    <Link href="/subscribe">
                       <Button size="sm" variant="ghost">Get alerts</Button>
-                    </a>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
