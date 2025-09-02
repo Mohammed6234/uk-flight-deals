@@ -2,8 +2,9 @@
 // Suggested Vercel Cron: 0 9 * * MON
 // https://vercel.com/docs/cron-jobs
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { supabaseService } from '@/lib/supabase';
 import { buildUnsubLink } from '@/lib/email';
 
@@ -26,7 +27,7 @@ interface DealItem {
 
 interface Subscriber { email: string | null }
 
-export async function POST(_req: NextRequest) {
+export async function POST() {
   // Basic disable/ratelimit switch
   if ((process.env.DIGEST_DISABLED || '').toLowerCase() === 'true') {
     return NextResponse.json({ ok: true, sent: 0, disabled: true });
@@ -73,7 +74,7 @@ export async function POST(_req: NextRequest) {
   }
 
   // SMTP transporter (reuse config pattern from notify)
-  const transporter = nodemailer.createTransport({
+  const transportOptions: SMTPTransport.Options = {
     host: reqd('SMTP_HOST'),
     port: Number(reqd('SMTP_PORT')),
     secure: String(process.env.SMTP_SECURE || 'true') === 'true',
@@ -83,22 +84,14 @@ export async function POST(_req: NextRequest) {
     },
     pool: true,
     maxConnections: Number(process.env.SMTP_MAX_CONN || 3),
-  } as any);
+  };
+  const transporter = nodemailer.createTransport(transportOptions);
 
   const fromName = process.env.ALERTS_FROM_NAME || 'UK Flight Deals';
   const fromEmail = process.env.ALERTS_FROM_EMAIL || process.env.SMTP_USER!;
   const from = `${fromName} <${fromEmail}>`;
 
   const subject = '📬 Your weekly UK Flight Deals';
-  const itemsHtml = top
-    .map(
-      (d) =>
-        `<li><strong>£${d.price_gbp}</strong> — ${d.origin_airport} → ${d.destination_airport}` +
-        (d.outbound_dates ? ` · ${d.outbound_dates}` : '') +
-        (d.link ? ` · <a href="${d.link}">Open</a>` : '') +
-        `</li>`
-    )
-    .join('');
 
   let sent = 0;
   const failures: Array<{ to: string; error: string }> = [];

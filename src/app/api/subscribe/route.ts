@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import nodemailer from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { buildUnsubLink } from '@/lib/email';
 
 export const runtime = 'nodejs';
@@ -46,12 +47,13 @@ export async function POST(req: NextRequest) {
         const secure = String(process.env.SMTP_SECURE || 'true') === 'true';
 
         if (host && user && pass) {
-          const transporter = nodemailer.createTransport({
+          const options: SMTPTransport.Options = {
             host,
             port,
             secure,
             auth: { user, pass },
-          } as any);
+          };
+          const transporter = nodemailer.createTransport(options);
 
           const fromName = process.env.ALERTS_FROM_NAME || 'UK Flight Deals';
           const fromEmail = process.env.ALERTS_FROM_EMAIL || user;
