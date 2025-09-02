@@ -11,6 +11,7 @@ export default function Subscribe() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const proLink = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +69,13 @@ export default function Subscribe() {
                 <Link href="/" className="text-sm text-gray-600 dark:text-gray-400 underline">Back to deals</Link>
               </div>
               {error && <p className="text-red-600 text-sm">{error}</p>}
+              {proLink && (
+                <div className="pt-2">
+                  <a href={proLink} target="_blank" rel="noreferrer">
+                    <Button variant="secondary">Upgrade to Pro (£1/mo)</Button>
+                  </a>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>

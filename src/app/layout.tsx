@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,9 +55,12 @@ export default function RootLayout({
           <footer className="border-t border-black/5 dark:border-white/10 py-8 text-sm">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-gray-600 dark:text-gray-400">
               <p>© {new Date().getFullYear()} UK Flight Deals</p>
-              <p>Built with Next.js · Prices are indicative · Always check final fare</p>
+              <p>
+                Built with Next.js · Prices are indicative · Always check final fare · <Link href="/privacy">Privacy</Link>
+              </p>
             </div>
           </footer>
+          <Analytics />
         </div>
       </body>
     </html>

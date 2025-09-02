@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { supabaseService } from '@/lib/supabase';
+import { buildUnsubLink } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -26,6 +27,7 @@ interface Deal {
   trip_type?: string | null;
   outbound_dates?: string | null;
   link?: string | null;
+  last_notified_at?: string | null;
 }
 
 export async function POST(req: NextRequest) {
@@ -44,6 +46,15 @@ export async function POST(req: NextRequest) {
 
     if (dealErr || !deal) {
       return NextResponse.json({ error: 'Deal not found' }, { status: 404 });
+    }
+
+    // Rate-limit: skip if last notified within past 15 minutes
+    if (deal.last_notified_at) {
+      const last = new Date(deal.last_notified_at).getTime();
+      const fifteenMinMs = 15 * 60 * 1000;
+      if (!Number.isNaN(last) && Date.now() - last < fifteenMinMs) {
+        return NextResponse.json({ ok: true, sent: 0, note: 'rate-limited' });
+      }
     }
 
     // Load subscribers
@@ -79,25 +90,56 @@ export async function POST(req: NextRequest) {
     const fromEmail = process.env.ALERTS_FROM_EMAIL || process.env.SMTP_USER!;
     const from = `${fromName} <${fromEmail}>`;
 
-    const subject = `£${deal.price_gbp} ${deal.origin_airport} → ${deal.destination_airport} (${deal.trip_type ?? 'return'})`;
-    const html = `
-      <h2>🔥 New UK flight deal</h2>
-      <p><strong>Route:</strong> ${deal.origin_airport} → ${deal.destination_airport}</p>
-      <p><strong>Price:</strong> £${deal.price_gbp}${deal.airline ? ` · ${deal.airline}` : ''}</p>
-      <p><strong>Dates:</strong> ${deal.outbound_dates ?? 'Flexible / multiple'}</p>
-      <p><a href="${deal.link ?? '#'}">Open deal</a></p>
-    `;
+    const subject = `🔥 £${deal.price_gbp} ${deal.origin_airport} → ${deal.destination_airport} (${deal.trip_type ?? 'return'})`;
 
     let sent = 0;
     const failures: Array<{ to: string; error: string }> = [];
 
     for (const to of recipients) {
       try {
+        const unsub = buildUnsubLink(to);
+        let dealUrl = '#';
+        if (deal.link) {
+          try {
+            const u = new URL(deal.link);
+            u.searchParams.set('utm_source', 'email');
+            u.searchParams.set('utm_medium', 'alert');
+            u.searchParams.set('utm_campaign', deal.id);
+            dealUrl = u.toString();
+          } catch {}
+        }
+        const html = `
+          <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;color:#111">
+            <h2 style="margin:0 0 8px">✈️ New deal just landed</h2>
+            <p style="margin:0 0 12px;color:#475569">Blink and you’ll miss it — here’s a tasty fare before it flies away.</p>
+            <ul style="padding-left:16px;margin:0 0 12px">
+              <li><strong>Route:</strong> ${deal.origin_airport} → ${deal.destination_airport}</li>
+              <li><strong>Price:</strong> £${deal.price_gbp}${deal.airline ? ` · ${deal.airline}` : ''}</li>
+              <li><strong>Dates:</strong> ${deal.outbound_dates ?? 'Flexible / multiple'}</li>
+            </ul>
+            <p style="margin:12px 0">
+              <a href="${dealUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px">View deal</a>
+            </p>
+            <p style="font-size:12px;color:#64748b;margin-top:20px">
+              You’re receiving this because you subscribed to UK Flight Deals.
+              <a href="${unsub}" style="margin-left:8px;color:#334155">Unsubscribe</a>
+            </p>
+          </div>
+        `;
         await transporter.sendMail({ from, to, subject, html });
         sent++;
       } catch (e) {
         const err = e as Error;
         failures.push({ to, error: err.message });
+      }
+    }
+
+    // If at least one message was sent, update last_notified_at
+    if (sent > 0) {
+      try {
+        await supabaseService.from('deals').update({ last_notified_at: new Date().toISOString() }).eq('id', deal.id);
+      } catch {
+        // ignore update errors
       }
     }
 
