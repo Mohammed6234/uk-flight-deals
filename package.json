@@ -13,6 +13,7 @@
     "@vercel/analytics": "^1.5.0",
     "next": "15.5.2",
     "nodemailer": "^7.0.6",
+    "openai": "^4.67.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "resend": "^6.0.2"

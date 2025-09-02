@@ -40,6 +40,9 @@ export default function RootLayout({
                 <Link href="/" className="px-3 py-2 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition">
                   Home
                 </Link>
+                <Link href="/airports" className="px-3 py-2 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition">
+                  Airports
+                </Link>
                 <Link
                   href="/subscribe"
                   className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 transition"

@@ -50,3 +50,37 @@ alter table public.deals add column if not exists last_notified_at timestamptz;
 ```
 
 Reference copy lives in `supabase_migrations.sql` (comment-only) at the project root.
+
+## Ingestion + Cron (Daily Deals)
+
+- API route: `src/app/api/ingest/route.ts:1`
+  - POST only. Fetches 2 public UK deal pages, asks OpenAI to extract structured deals, and upserts to `public.deals` with `is_published=true`.
+  - Returns `{ ok: true, inserted: N }`.
+- Cron: `vercel.json:1`
+  - Schedules `POST /api/ingest` at `5 8 * * *` (08:05 daily, London time via Vercel’s region handling).
+- Local test:
+
+```bash
+curl -X POST http://localhost:3000/api/ingest
+```
+
+### Required env vars
+
+Set these in Vercel Project → Settings → Environment Variables (and in `.env.local` for local dev):
+
+- `OPENAI_API_KEY` — for ingestion extraction (server-only)
+- `NEXT_PUBLIC_BASE_URL` — e.g. `http://localhost:3000` or your site URL
+- Supabase (already used): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- SMTP (already used for emails): `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+## Airports Drilldown UI
+
+- Airports list: `src/app/airports/page.tsx`
+- Months by origin: `src/app/airports/[origin]/page.tsx`
+- Deals by month: `src/app/airports/[origin]/[month]/page.tsx`
+
+Browse:
+
+- `/airports` → unique UK origin airports with published deals
+- `/airports/MAN` → month chips derived from `outbound_dates`
+- `/airports/MAN/Nov` → deals with hero images + destination blurbs
