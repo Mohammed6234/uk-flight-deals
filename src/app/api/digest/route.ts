@@ -82,8 +82,6 @@ export async function POST() {
       user: reqd('SMTP_USER'),
       pass: reqd('SMTP_PASS'),
     },
-    pool: true,
-    maxConnections: Number(process.env.SMTP_MAX_CONN || 3),
   };
   const transporter = nodemailer.createTransport(transportOptions);
 
