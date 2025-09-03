@@ -1,6 +1,6 @@
 import { supabasePublic } from '@/lib/supabase';
-import { destinationImageUrl } from '@/lib/images';
 import { destinationBlurb } from '@/lib/destinations';
+import { imagePathForIata } from '@/lib/airports';
 
 export default async function DealsByMonth({ params }: { params: { origin: string; month: string } }) {
   const origin = params.origin.toUpperCase();
@@ -20,7 +20,7 @@ export default async function DealsByMonth({ params }: { params: { origin: strin
         {origin} · {month}
       </h1>
       {(deals ?? []).map((d) => {
-        const img = destinationImageUrl(d.destination_airport as string);
+        const img = imagePathForIata(d.destination_airport as string);
         const blurb = destinationBlurb(d.destination_airport as string);
         return (
           <article key={d.id} className="border rounded overflow-hidden">
@@ -44,4 +44,3 @@ export default async function DealsByMonth({ params }: { params: { origin: strin
     </main>
   );
 }
-
